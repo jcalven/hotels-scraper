@@ -47,7 +47,7 @@ def get_hotels_page(url):
     
     options = Options()
     options.add_argument('--private')
-    # options.add_argument("--headless")
+    options.add_argument("--headless")
     driver = Firefox(executable_path="geckodriver", options=options)
     driver.set_window_size(1920,1080)
 
