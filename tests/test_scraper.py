@@ -1,4 +1,5 @@
 import hotscrape.scraper as hs
+from hotscrape.parser import parse
 import pandas as pd
 
 class Test():
@@ -27,7 +28,7 @@ class Test():
             "f-price-multiplier=1&f-price-min=0&f-price-max=10000&" \
                 "f-star-rating=5,4,3,2,1&f-guest-rating-min=1&" \
                     "f-guest-rating-max=9&q-destination=Las%20Vegas,%20Nevada,%20United%20States%20of%20America&" \
-                        "q-check-in=2020-05-30&q-check-out=2020-05-31&q-rooms=1&q-room-0-adults=2&q-room-0-children=0"
+                        "q-check-in=2021-05-30&q-check-out=2021-05-31&q-rooms=1&q-room-0-adults=2&q-room-0-children=0"
 
     def test_get_soup(self):
         url = hs.generate_url(**self.search_dict)
@@ -40,3 +41,11 @@ class Test():
         res = hs.get_attributes(soup)
         bla = "bla"
     #raw_hotel_2_0, souppp = combine_df(search_dict)
+
+    def test_parser(self):
+            url = hs.generate_url(**self.search_dict)
+            soup = hs.get_hotels_page(url)
+            res = hs.get_attributes(soup, **self.search_dict)
+            df = pd.DataFrame(res)
+            df_parsed = parse(df)
+            pass
