@@ -38,14 +38,13 @@ class Test():
     def test_get_attributes(self):
         url = hs.generate_url(**self.search_dict)
         soup = hs.get_hotels_page(url)
-        res = hs.get_attributes(soup)
-        bla = "bla"
-    #raw_hotel_2_0, souppp = combine_df(search_dict)
+        res = hs.get_attributes(soup, **self.search_dict)
+        assert sum(len(val) for val in res.values()) == len(res) * len(res["name"])
 
     def test_parser(self):
-            url = hs.generate_url(**self.search_dict)
-            soup = hs.get_hotels_page(url)
-            res = hs.get_attributes(soup, **self.search_dict)
-            df = pd.DataFrame(res)
-            df_parsed = parse(df)
-            pass
+        url = hs.generate_url(**self.search_dict)
+        soup = hs.get_hotels_page(url)
+        res = hs.get_attributes(soup, **self.search_dict)
+        df = pd.DataFrame(res)
+        df_parsed = parse(df)
+        pass
