@@ -42,7 +42,11 @@ def parse_rating(row, sentiment=False):
     # Extract hotel star rating from `star_rating` column
     row = row[1]["rating"]
     if sentiment:
-        return row.split(" ")[0]
+        row = re.sub(r"[-+]?\d*\.\d+|\d+", "", row).strip()
+        if not row:
+            return None
+        else:
+            return row
     else:
         row = re.findall(r"[-+]?\d*\.\d+|\d+", row)
         if row:
@@ -64,6 +68,8 @@ def parse(df):
     num_reviews = []
     rating = []
     rating_sentiment = []
+
+    # df["rating_sentiment"] = df["rating"]
 
     # Row-level processing
     for row in df.iterrows():
