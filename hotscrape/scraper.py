@@ -24,6 +24,9 @@ from selenium.webdriver.firefox.options import Options
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.wait import WebDriverWait
 
+from hotscrape.parser import parse
+
+
 class Scraper(object):
 
     def __init__(self,):
@@ -94,8 +97,8 @@ def generate_url(destination, checkin_date, checkout_date=None, price_min=0, pri
     dest_field_2 = destination.get("state")
     dest_field_3 = destination.get("country")
 
-    if not checkout_date:
-        checkout_date = (pd.to_datetime(checkin_date) + pd.DateOffset(1)).strftime("%Y-%m-%d")
+    # if not checkout_date:
+    #     checkout_date = (pd.to_datetime(checkin_date) + pd.DateOffset(1)).strftime("%Y-%m-%d")
 
     url = "".join([
         "https://www.hotels.com/search.do?",
@@ -135,24 +138,56 @@ def get_content_list(soup, tag, class_):
     raw_list = [content.text for content in raw]
     return raw_list
 
-
 def get_attributes(soup, **search_dict):
 
     attributes_dict = {key: get_content_list(soup, feature_html_details[key][0], feature_html_details[key][1]) for key in feature_html_details}
     n_hotels = len(attributes_dict["name"])
 
-    checkin_date = search_dict.get("checkin_date")
-    checkout_date = search_dict.get("checkout_date")
-    if checkout_date is None:
-        if checkin_date is not None:
-            checkout_date = (pd.to_datetime(checkin_date) + pd.DateOffset(1)).strftime("%Y-%m-%d")
-    attributes_dict["checkin_date"] = [checkin_date] * n_hotels
-    attributes_dict["checkout_date"] = [checkout_date] * n_hotels
-    attributes_dict["adults"] = [search_dict.get("adults")] * n_hotels
-    attributes_dict["children"] = [search_dict.get("children")] * n_hotels
+    # checkin_date = search_dict.get("checkin_date")
+    # checkout_date = search_dict.get("checkout_date")
+    # if checkout_date is None:
+    #     if checkin_date is not None:
+    #         checkout_date = (pd.to_datetime(checkin_date) + pd.DateOffset(1)).strftime("%Y-%m-%d")
+    # attributes_dict["checkin_date"] = [checkin_date] * n_hotels
+    # attributes_dict["checkout_date"] = [checkout_date] * n_hotels
+    # attributes_dict["adults"] = [search_dict.get("adults")] * n_hotels
+    # attributes_dict["children"] = [search_dict.get("children")] * n_hotels
+    # attributes_dict["search_datetime"] = [datetime.now()] * n_hotels
 
     #print(f'{checkin} and {checkout} is successful!', hotel_df.shape)
     return attributes_dict
+
+def get_dfs(search_dict, attributes_dict):
+
+    # Expand `destination` field 
+    tmp_dict = {key: val for key, val in search_dict["destination"].items()}
+    search_dict.update(tmp_dict)
+    del search_dict["destination"]
+
+    # Add search timestamp if not already there
+    # if not search_dict["search_datetime"]:
+    search_dict["search_datetime"] = datetime.now()
+    
+    # Create search dataframe
+    df_search = pd.DataFrame(search_dict, index=[0])
+
+    # Create primary key from hashed dataframe
+    primary_key = pd.util.hash_pandas_object(df_search, index=False)[0] % 0xffffffff
+    df_search["id"] = primary_key
+    df_search.set_index("id", drop=True, inplace=True)
+
+    # Create attributes dataframe
+    df_attributes = parse(pd.DataFrame(attributes_dict))
+
+    # Add primary_key to attributes dataframe
+    df_attributes["search_id"] = primary_key
+    # Create another primary key 
+    primary_key = pd.util.hash_pandas_object(df_attributes, index=False) % 0xffffffff
+    df_attributes["id"] = primary_key
+    # df_attributes["search_id"] = df_attributes["search_id"]
+    df_attributes.set_index("id", drop=True, inplace=True)
+
+    return df_search, df_attributes
 
 # def combine_df(search):
     # """
@@ -189,7 +224,16 @@ def get_attributes(soup, **search_dict):
     # # #print(f'This dataset has {combined_hotel_df.shape[0]} rows and {combined_hotel_df.shape[0]} columns')
     # # return partial_df, soup #combined_hotel_df
 
+def ensure_search_format(search_dict):
 
+    assert search_dict.get("destination") is not None
+    assert search_dict.get("destination").get("city") is not None
+    assert search_dict.get("destination").get("state") is not None
+    assert search_dict.get("destination").get("country") is not None
+    if not search_dict.get("checkout_date"):
+        checkout_date = (pd.to_datetime(search_dict.get("checkin_date")) + pd.DateOffset(1)).strftime("%Y-%m-%d")
+        search_dict["checkout_date"] = checkout_date
+    return search_dict
 
 if __name__ == '__main__':
 
@@ -199,6 +243,10 @@ if __name__ == '__main__':
     #dates_list = []
     #for checkin, checkout in zip(list_checkin, list_checkout):
     #    dates_list.append((checkin, checkout))
+
+    db_schema = {
+
+    }
 
     search_dict = {
         "destination": {"city": "Las Vegas", "state": "Nevada", "country": "United States of America"},
@@ -216,8 +264,10 @@ if __name__ == '__main__':
         "adults": 2,
         "children": 0,
         "currency": "USD",
+        "search_datetime": None,
     }
 
+    search_dict = ensure_search_format(search_dict)
     url = generate_url(**search_dict)
     soup = get_hotels_page(url)
     res = get_attributes(soup, **search_dict)
