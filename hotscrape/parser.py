@@ -53,11 +53,20 @@ def parse_rating(row, sentiment=False):
             return float(row[0])
         else:
             return None
+
+def parse_landmarks(row):
+    # Extract hotel star rating from `star_rating` column
+    row = row[1]["landmarks"]
+    # Extract distance to city center
+    try:
+        return float(row.split("miles to City center")[0].strip())
+    except:
+        return None
     
 def parse(df):
     # Cast date columns as datetime type
-    df["checkin_date"] = pd.to_datetime(df["checkin_date"])
-    df["checkout_date"] = pd.to_datetime(df["checkout_date"])
+    # df["checkin_date"] = pd.to_datetime(df["checkin_date"])
+    # df["checkout_date"] = pd.to_datetime(df["checkout_date"])
 
     # Store `price`column data in new column
     df["price_metadata"] = df["price"]
@@ -68,6 +77,7 @@ def parse(df):
     num_reviews = []
     rating = []
     rating_sentiment = []
+    city_center_distance = []
 
     # df["rating_sentiment"] = df["rating"]
 
@@ -79,6 +89,7 @@ def parse(df):
         num_reviews.append(parse_num_reviews(row))
         rating.append(parse_rating(row))
         rating_sentiment.append(parse_rating(row, sentiment=True))
+        city_center_distance.append(parse_landmarks(row))
     
     df["price"] = price
     df["price_sale"] = price_sale
@@ -86,5 +97,6 @@ def parse(df):
     df["num_reviews"] = num_reviews
     df["rating"] = rating
     df["rating_sentiment"] = rating_sentiment
+    df["distance_centre"] = city_center_distance
     
     return df
