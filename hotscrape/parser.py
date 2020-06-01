@@ -2,15 +2,11 @@ import pandas as pd
 import re
 
 def parse_price(row, sale=False):
-    # Extract price data from `price`column
+    """Extract price data from `price`column"""
+
     row = row[1]["price"]
     # Extract dollar amounts from string
     row = re.findall(r"\$\d+", row)
-    # row = row.findall(r"\$\d+")
-
-    # Extract dollar amounts from string
-    # df["price"] = df_.price.str.findall(r"\$\d+")
-
     if not row:
         return None
     elif len(row) == 1:
@@ -25,12 +21,14 @@ def parse_price(row, sale=False):
             return int(row[0].lstrip("$"))
 
 def parse_star_rating(row):
-    # Extract hotel star rating from `star_rating` column
+    """Extract hotel star rating data from `star_rating` column"""
+
     row = row[1]["star_rating"]
     return float(row.strip("-star"))
 
 def parse_num_reviews(row):
-    # Extract hotel star rating from `star_rating` column
+    """Extract number of reviews data from `num_reviews` column"""
+
     row = row[1]["num_reviews"]
     row = re.findall(r"\d+", row)
     if row:
@@ -39,7 +37,8 @@ def parse_num_reviews(row):
         return None
 
 def parse_rating(row, sentiment=False):
-    # Extract hotel star rating from `star_rating` column
+    """Extract hotel rating data from `rating` column"""
+
     row = row[1]["rating"]
     if sentiment:
         row = re.sub(r"[-+]?\d*\.\d+|\d+", "", row).strip()
@@ -55,7 +54,8 @@ def parse_rating(row, sentiment=False):
             return None
 
 def parse_landmarks(row):
-    # Extract hotel star rating from `star_rating` column
+    """Extract landmarks data from `landmarks` column"""
+
     row = row[1]["landmarks"]
     # Extract distance to city center
     if "miles to City center" in row:
@@ -72,11 +72,17 @@ def parse_landmarks(row):
         return None
     
 def parse(df):
-    # Cast date columns as datetime type
-    # df["checkin_date"] = pd.to_datetime(df["checkin_date"])
-    # df["checkout_date"] = pd.to_datetime(df["checkout_date"])
+    """
+    Parses and formats a dataframe containing hotels.com hotel search result attributes. 
 
-    # Store `price`column data in new column
+    Args:
+        df (pd.DataFrame): Pandas hotel attributes dataframe to be parsed
+
+    Returns:
+        pd.DataFrame: Parsed and formatted dataframe
+    """
+
+    # Store `price` column data in new column
     df["price_metadata"] = df["price"]
 
     price = []
@@ -86,8 +92,6 @@ def parse(df):
     rating = []
     rating_sentiment = []
     city_center_distance = []
-
-    # df["rating_sentiment"] = df["rating"]
 
     # Row-level processing
     for row in df.iterrows():
