@@ -58,9 +58,17 @@ def parse_landmarks(row):
     # Extract hotel star rating from `star_rating` column
     row = row[1]["landmarks"]
     # Extract distance to city center
-    try:
-        return float(row.split("miles to City center")[0].strip())
-    except:
+    if "miles to City center" in row:
+        try:
+            return float(row.split("miles to City center")[0].strip())
+        except ValueError:
+            return None
+    elif "mile to City center" in row:
+        try:
+            return float(row.split("mile to City center")[0].strip())
+        except ValueError:
+            return None
+    else:
         return None
     
 def parse(df):
