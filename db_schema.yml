@@ -1,0 +1,49 @@
+search :
+    - meta :
+        primary_key : id
+    - columns :
+        id : Integer
+        city : String
+        state : String
+        country : String
+        checkin_datetime : DateTime
+        checkout_datetime : DateTime
+        price_min : Integer
+        price_max : Integer
+        price_multiplier : Integer
+        star_rating_min : Integer
+        star_rating_max : Integer
+        guest_rating_min : Integer
+        guest_rating_max : Integer
+        price_multiplier : Integer
+        distance_centre : Float
+        rooms : Integer
+        adults : Integer
+        children : Integer
+        currency : String
+        search_datetime : DateTime
+        days_from_search : Integer
+        nights : Integer
+
+hotels :
+    - meta :
+        primary_key : id
+        foreign_key : search_id
+        reference : search.id
+    - columns :
+        id : Integer
+        search_id : Integer
+        address : String
+        amenities : String
+        details : String
+        landmarks : String
+        name : String
+        num_reviews : Integer
+        price: Float
+        price_sale: Float
+        rating : Float
+        rating_sentiment : String
+        review_box : String
+        star_rating : Float
+        price_metadata : String
+        distance_centre : Float
