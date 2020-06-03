@@ -70,6 +70,9 @@ def parse_landmarks(row):
             return None
     else:
         return None
+
+def drop_fully_booked(df):
+    return df.dropna(subset=["price", "price_sale"], how="all")
     
 def parse(df):
     """
@@ -110,5 +113,7 @@ def parse(df):
     df["rating"] = rating
     df["rating_sentiment"] = rating_sentiment
     df["distance_centre"] = city_center_distance
+
+    df = drop_fully_booked(df)
     
     return df
