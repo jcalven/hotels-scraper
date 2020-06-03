@@ -1,0 +1,69 @@
+import yaml
+import logging
+import numpy as np
+import sqlalchemy as sqlal #import create_engine
+from sqlalchemy import Table, Column, Integer, String, Float, MetaData, ForeignKey, DateTime
+
+logger = logging.getLogger("hotels-scraper.sql.sql")
+
+class TableMaker(object):
+
+    def __init__(self, metadata=None):
+        if metadata:
+            self.metadata = metadata
+        else:
+            self.metadata = MetaData()
+    
+    def create_columns(self, schema):
+        res = []
+        meta = schema[0]["meta"]
+        columns = schema[1]["columns"]
+        for name, dtype in columns.items():
+            if name == meta["primary_key"]:
+                res.append(sqlal.Column(name, eval(dtype), nullable=False, primary_key=name))
+            elif name == meta.get("foreign_key"):
+                res.append(sqlal.Column(name, eval(dtype), ForeignKey(meta.get("reference"))))
+            else:
+                res.append(sqlal.Column(name, eval(dtype), nullable=True))
+        return res
+    
+    def create_table(self, name, schema):
+        table = Table(name, self.metadata,
+                      *self.create_columns(schema)
+                     )
+        return table
+    
+def create_connection(filename):
+    engine = sqlal.create_engine(f'sqlite:///{filename}.db')
+    connection = engine.connect()
+    return connection
+        
+def create_database(filename, schemas, conn=None):
+    tablemaker = TableMaker()
+    if not conn:
+        conn = create_connection(filename)
+    for name, schema in schemas.items():
+        _ = tablemaker.create_table(name, schema)
+        # table.create_all(connection, checkfirst=True) #Creates the table
+    tablemaker.metadata.create_all(conn, checkfirst=True) # Creates the table
+    return conn
+
+def to_sql(df, table_name, conn):
+    ids = tuple(df.index.to_list())
+    n_rows = len(ids)
+    if n_rows == 1:
+        ids = ids[0]
+        res = conn.execute(f"SELECT id FROM {table_name} WHERE id IN ({ids})")
+    else:
+        ids = tuple(ids)
+        res = conn.execute(f"SELECT id FROM {table_name} WHERE id IN {ids}")
+    indx = np.array(res.fetchall()).flatten()
+    df = df.loc[df.index.difference(indx)]
+    if not df.empty:
+        try:
+            df.to_sql(table_name, conn, if_exists="append", index=True)
+            logger.info(f"{df.shape[0]}/{n_rows} records upserted to table <{table_name}>")
+        except Exception as error:
+            logger.error(error)
+    else:
+        logger.info(f"0/{n_rows} records upserted to <{table_name}>. (No unique records in DataFrame)")
