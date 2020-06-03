@@ -4,8 +4,8 @@ import pandas as pd
 
 search_dict = {
     "destination": {"city": "Las Vegas", "state": "Nevada", "country": "United States of America"},
-    "checkin_date": "2020-06-30",
-    "checkout_date": None,
+    "checkin_datetime": "2020-06-30",
+    "checkout_datetime": None,
     "price_min": 0,
     "price_max": 10000,
     "price_multiplier": 1,
