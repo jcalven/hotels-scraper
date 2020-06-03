@@ -2,33 +2,44 @@ import pandas as pd
 from bs4 import BeautifulSoup
 import time
 import re
+import logging
 from datetime import datetime
 from selenium.webdriver import Firefox
 from selenium.webdriver.common.by import By
 from selenium.webdriver.firefox.options import Options
-from hotscrape.parser import parse
+# from hotscrape.parser import parse
+# from hotscrape.parser import parse
 
-class Scraper(object):
+from . parser import parse
 
-    def __init__(self,):
+logger = logging.getLogger("hotels-scraper.scraper.scraper")
 
-        pass
+feature_html_details = {'name': ('h3', 'p-name'),
+                        'address': ('span', 'address'),
+                        # 'maplink': ('a', 'map-link xs-welcome-rewards'),
+                        'landmarks': ('ul', 'property-landmarks'),
+                        'amenities': ('ul', 'hmvt8258-amenities'),
+                        'details': ('div', 'additional-details resp-module'),
+                        'review_box': ('div', 'details resp-module'),
+                        'rating': ('strong', re.compile('guest-reviews-badge.*')),
+                        'num_reviews': ('span','small-view'),
+                        'price': ('aside', re.compile('pricing resp-module.*')),
+                        'star_rating': ('span', 'star-rating-text')}
 
-    #def 
-
-
-def get_hotels_page(url, max_scroll=1):    
+def get_hotels_page(url, max_scroll=20):    
     
-    '''
+    """
     Takes an url from Hotels.com and 
     infinitely scrolls down to end of page
     until no more content can be loaded.
-    '''
+    """
     # Open up chrome in incognito
     # chrome_options = webdriver.ChromeOptions()
     # chrome_options.add_argument("--incognito")
     # driver = webdriver.Chrome()
     
+    logger.info("Opening URL\n")
+
     options = Options()
     options.add_argument('--private')
     options.add_argument("--headless")
@@ -39,6 +50,7 @@ def get_hotels_page(url, max_scroll=1):
     driver.get(url)
     
     # Scroll down until the end of the page
+    logger.info("Scraping page...")
     scroll_count = 0
     while True:
         driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
@@ -48,13 +60,16 @@ def get_hotels_page(url, max_scroll=1):
             else:
                 time.sleep(0.5)
                 scroll_count += 1
+                logger.info(f"...{scroll_count}")
         except:
             continue
  
         if any([cur_elem.is_displayed() for cur_elem in driver.find_elements_by_class_name("info")]):
+            logger.info("End of search. Stopping...")
             break
 
-        if scroll_count > max_scroll:
+        if scroll_count >= max_scroll:
+            logger.info(f"Reached maximum number of pages ({scroll_count}/{max_scroll}). Stopping...")
             break
             
     # Grabs the html of the fully scrolled-down page and parse it with BeautifulSoup  
@@ -103,20 +118,8 @@ def generate_url(destination, checkin_datetime, checkout_datetime=None, price_mi
         f"q-room-0-children={children}"
     ])
 
+    logger.info(f"Searching url: {url}\n")
     return url
-
-feature_html_details = {'name': ('h3', 'p-name'),
-                        'address': ('span', 'address'),
-                        # 'maplink': ('a', 'map-link xs-welcome-rewards'),
-                        'landmarks': ('ul', 'property-landmarks'),
-                        'amenities': ('ul', 'hmvt8258-amenities'),
-                        'details': ('div', 'additional-details resp-module'),
-                        'review_box': ('div', 'details resp-module'),
-                        'rating': ('strong', re.compile('guest-reviews-badge.*')),
-                        'num_reviews': ('span','small-view'),
-                        'price': ('aside', re.compile('pricing resp-module.*')),
-                        'star_rating': ('span', 'star-rating-text')}
-
 
 def get_content_list(soup, tag, class_):
     raw = soup.find_all(tag, {'class': class_})
@@ -167,6 +170,8 @@ def get_dfs(search_dict, attributes_dict):
 
 def ensure_search_format(search_dict):
 
+    logger.info(f"Search parameters: {search_dict}\n")
+
     # Check destination formatting
     assert search_dict.get("destination") is not None
     assert search_dict.get("destination").get("city") is not None
@@ -179,6 +184,30 @@ def ensure_search_format(search_dict):
         search_dict["checkout_datetime"] = search_dict.get("checkin_datetime") + pd.DateOffset(1)
     return search_dict
 
+def run(search):
+    """[summary]
+
+    Args:
+        search ([type]): [description]
+
+    Returns:
+        [type]: [description]
+    """
+
+    logger.info("Scraper initiated")
+    # logger.info(f"Search parameters: {search}")
+
+
+    search_dict = ensure_search_format(search)
+    url = generate_url(**search_dict)
+    
+    soup = get_hotels_page(url)
+    res = get_attributes(soup, **search_dict)
+
+    df_search, df_attributes = get_dfs(search_dict, res)
+    return df_search, df_attributes
+
+
 if __name__ == '__main__':
 
     # list_checkin = pd.date_range('2020-05-05', '2020-11-05', freq='D').strftime("%Y-%m-%d").tolist()
@@ -188,9 +217,6 @@ if __name__ == '__main__':
     #for checkin, checkout in zip(list_checkin, list_checkout):
     #    dates_list.append((checkin, checkout))
 
-    db_schema = {
-
-    }
 
     search_dict = {
         "destination": {"city": "Las Vegas", "state": "Nevada", "country": "United States of America"},
@@ -208,11 +234,4 @@ if __name__ == '__main__':
         "adults": 2,
         "children": 0,
         "currency": "USD",
-        # "search_datetime": None,
     }
-
-    search_dict = ensure_search_format(search_dict)
-    url = generate_url(**search_dict)
-    soup = get_hotels_page(url)
-    res = get_attributes(soup, **search_dict)
-    #raw_hotel_2_0, souppp = combine_df(search_dict)
