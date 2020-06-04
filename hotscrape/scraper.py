@@ -50,7 +50,7 @@ def get_hotels_page(url, max_scroll=20):
     driver.get(url)
     
     # Scroll down until the end of the page
-    logger.info("Scraping page...")
+    logger.info("Start scraping ...")
     scroll_count = 0
     while True:
         driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
@@ -60,16 +60,15 @@ def get_hotels_page(url, max_scroll=20):
             else:
                 time.sleep(0.5)
                 scroll_count += 1
-                logger.info(f"...{scroll_count}")
         except:
             continue
  
         if any([cur_elem.is_displayed() for cur_elem in driver.find_elements_by_class_name("info")]):
-            logger.info("End of search. Stopping...")
+            logger.info("Scraping ended")
             break
 
         if scroll_count >= max_scroll:
-            logger.info(f"Reached maximum number of pages ({scroll_count}/{max_scroll}). Stopping...")
+            logger.info(f"Reached maximum number of page loads ({scroll_count}/{max_scroll}). Stopping ...")
             break
             
     # Grabs the html of the fully scrolled-down page and parse it with BeautifulSoup  
@@ -163,7 +162,9 @@ def get_dfs(search_dict, attributes_dict):
     # Create another primary key 
     primary_key = pd.util.hash_pandas_object(df_attributes, index=False) % 0xffffffff
     df_attributes["id"] = primary_key.astype(int)
-    # df_attributes["search_id"] = df_attributes["search_id"]
+
+    # Drop rows with non-unique id's
+    df_attributes.drop_duplicates(subset=["id"], inplace=True)
     df_attributes.set_index("id", drop=True, inplace=True)
 
     return df_search, df_attributes
@@ -194,6 +195,7 @@ def run(search):
         [type]: [description]
     """
 
+    logger.info("\n\n")
     logger.info("Scraper initiated")
     # logger.info(f"Search parameters: {search}")
 
@@ -206,32 +208,3 @@ def run(search):
 
     df_search, df_attributes = get_dfs(search_dict, res)
     return df_search, df_attributes
-
-
-if __name__ == '__main__':
-
-    # list_checkin = pd.date_range('2020-05-05', '2020-11-05', freq='D').strftime("%Y-%m-%d").tolist()
-    # list_checkout = pd.date_range('2020-05-06', '2020-11-06', freq='D').strftime("%Y-%m-%d").tolist()
-
-    #dates_list = []
-    #for checkin, checkout in zip(list_checkin, list_checkout):
-    #    dates_list.append((checkin, checkout))
-
-
-    search_dict = {
-        "destination": {"city": "Las Vegas", "state": "Nevada", "country": "United States of America"},
-        "checkin_datetime": "2020-05-20",
-        "checkout_datetime": None,
-        "price_min": 0,
-        "price_max": 10000,
-        "price_multiplier": 1,
-        "star_rating_min": 1,
-        "star_rating_max": 5,
-        "guest_rating_min": 1,
-        "guest_rating_max": 9,
-        "distance_centre": None,
-        "rooms": 1,
-        "adults": 2,
-        "children": 0,
-        "currency": "USD",
-    }
