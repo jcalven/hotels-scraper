@@ -10,7 +10,7 @@ class TestSQL(TestBase):
 
         search_dict_ = hs.ensure_search_format(search_dict)
         url = hs.generate_url(**search_dict_)
-        soup = hs.get_hotels_page(url)
+        soup = hs.get_hotels_page(url, max_scroll=1)
         res = hs.get_attributes(soup, **search_dict_)
 
         df_search, df_attributes = hs.get_dfs(search_dict_, res)
