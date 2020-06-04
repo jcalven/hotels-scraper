@@ -1,7 +1,7 @@
 import yaml
 import logging
 import numpy as np
-import sqlalchemy as sqlal #import create_engine
+import sqlalchemy as sqlal
 from sqlalchemy import Table, Column, Integer, String, Float, MetaData, ForeignKey, DateTime
 
 logger = logging.getLogger("hotels-scraper.sql.sql")

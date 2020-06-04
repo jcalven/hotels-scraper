@@ -7,9 +7,6 @@ from datetime import datetime
 from selenium.webdriver import Firefox
 from selenium.webdriver.common.by import By
 from selenium.webdriver.firefox.options import Options
-# from hotscrape.parser import parse
-# from hotscrape.parser import parse
-
 from . parser import parse
 
 logger = logging.getLogger("hotels-scraper.scraper.scraper")
