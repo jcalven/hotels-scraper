@@ -3,19 +3,20 @@ import pandas as pd
 from datetime import datetime, timedelta
 
 def create_search_list(config_path):
+    """
+    Helper function for parsing the search config file.
+    Returns a list of config section dictionaries.
+    """
     config = ConfigParser()
     config.read(config_path)
     return [dict(config.items(s)) for s in config.sections()]
-    # res = []
-    # search_span = int(config.get("search_span"))
-    # if search_span is not None:
-    #     for i in range(search_span, 1):
-    #         yield Search(config)
-    #         res.append(Search(config))
-    # return res
+
 
 class MissingKeyError(Exception):
-    """Base class for other exceptions"""
+    """
+    Custom exception triggered when search dictionary is missing
+    a mandatory key.
+    """
     def __init__(self, keyword):
         self.keyword = keyword
         self.message = f"Must specify {self.keyword}"
@@ -23,7 +24,9 @@ class MissingKeyError(Exception):
 
 
 class ValueOutOfRangeError(Exception):
-    """Base class for other exceptions"""
+    """
+    Custom exception triggered when search dictionary items are out of range.
+    """
     def __init__(self, name, val, min, max):
         self.val = val
         if val > max:
@@ -37,6 +40,9 @@ class ValueOutOfRangeError(Exception):
 
 
 class Search():
+    """
+    Class to structure the search config file content into a format required by scraper.py
+    """
 
     __counter = 0
 
@@ -67,6 +73,16 @@ class Search():
 
     @classmethod
     def generate(cls, config, count_key="search_span"):
+        """
+        Creates an iterator of Search instances with unique checkin/checkout dates
+
+        Args:
+            config (dict): Search config content
+            count_key (str, optional): Key to use for search span. Defaults to "search_span".
+
+        Yields:
+            Search: Unique Search instances
+        """
         search_span = int(config.get(count_key))
         if search_span is not None:
             for i in range(search_span):
@@ -75,6 +91,9 @@ class Search():
 
     @staticmethod
     def _recast(string):
+        """
+        Check if string is int, float, or neither. Returns correctly typecasted input.
+        """
         if string == "None":
             return eval(string)
         try:
@@ -92,7 +111,6 @@ class Search():
     def _check_value_range(name, val, min, max, is_none=False):
         if not is_none:
             if val < min or val > max:
-        #if (val < min | val > max) & is_none == False:
                 raise ValueOutOfRangeError(name, val, min, max)
 
     def __init__(self, config):
@@ -101,7 +119,6 @@ class Search():
 
         # Search dict from config file
         self.config = config
-        # Resulting search dict used for the search
 
         # Default search values
         self.city = None
@@ -131,6 +148,9 @@ class Search():
         self.check_input()
 
     def to_dict(self):
+        """
+        Returns a search dictionary that is accepted by scraper.py
+        """
         destination = {
             "city": self.city,
             "state": self.state,
@@ -141,6 +161,9 @@ class Search():
         return res
 
     def check_input(self, config=None):
+        """
+        Checks search config parameters for problems and updates parameters where needed.
+        """
 
         for key, val in self.config.items():
             val = self._recast(val)

@@ -23,13 +23,19 @@ feature_html_details = {"name": ("h3", "p-name"),
                         "price": ("aside", re.compile("pricing resp-module.*")),
                         "star_rating": ("span", "star-rating-text")}
 
-def get_hotels_page(url, max_scroll=20):    
-    
+def get_hotels_page(url, max_scroll=20):  
+
     """
-    Takes an url from Hotels.com and 
-    infinitely scrolls down to end of page
-    until no more content can be loaded.
+    Takes an url from Hotels.com and infinitely scrolls down to end of page until no more content can be loaded.
+
+    Args:
+        url (str): hotels.com URL
+        max_scroll (int, optional): Max number of webpage scrolls. Defaults to 20.
+
+    Returns:
+        bs4: Parsed website
     """
+
     # Open up chrome in incognito
     # chrome_options = webdriver.ChromeOptions()
     # chrome_options.add_argument("--incognito")
@@ -77,6 +83,10 @@ def get_hotels_page(url, max_scroll=20):
 def generate_url(destination, checkin_datetime, checkout_datetime=None, price_min=0, price_max=10000, price_multiplier=1, 
                  star_rating_min=1, star_rating_max=5, guest_rating_min=1, guest_rating_max=9, distance_centre=None, 
                  rooms=1, adults=2, children=0, currency="USD"):
+    
+    """
+    Takes hotel search parameters and returns a hotels.com URL string.
+    """
 
     #https://www.hotels.com/search.do?resolved-location=CITY%3A1504033%3AUNKNOWN%3AUNKNOWN&f-price-currency-code=USD&f-price-multiplier=1&f-price-min=30&f-price-max=395&f-star-rating=5,4,3,2,1&f-guest-rating-min=2&f-guest-rating-max=9&f-distance=2.0&f-lid=1504033&destination-id=1504033&q-destination=Las%20Vegas,%20Nevada,%20United%20States%20of%20America&q-check-in=2020-05-13&q-check-out=2020-05-14&q-rooms=1&q-room-0-adults=2&q-room-0-children=0&sort-order=DISTANCE_FROM_LANDMARK
 
@@ -92,9 +102,6 @@ def generate_url(destination, checkin_datetime, checkout_datetime=None, price_mi
     # Format checkin/checkout dates
     checkin_date = checkin_datetime.strftime("%Y-%m-%d")
     checkout_date = checkout_datetime.strftime("%Y-%m-%d")
-
-    # if not checkout_date:
-    #     checkout_date = (pd.to_datetime(checkin_date) + pd.DateOffset(1)).strftime("%Y-%m-%d")
 
     url = "".join([
         "https://www.hotels.com/search.do?",
@@ -117,12 +124,19 @@ def generate_url(destination, checkin_datetime, checkout_datetime=None, price_mi
     logger.info(f"Searching url: {url}\n")
     return url
 
-def get_content_list(soup, tag, class_):
-    # raw = soup.find_all(tag, {"class": class_})
-    # raw_list = [content.text for content in raw]
-    return postprocess_soup(soup, tag, class_)
+# def get_content_list(soup, tag, class_):
+#     """
+#     Takes a bs4 object and parses it based on tag and class properties. 
+#     Returns list of parsed bs4 object contents.
+#     """
+#     return postprocess_soup(soup, tag, class_)
 
 def postprocess_soup(soup, tag, class_):
+
+    """
+    Takes a bs4 object and parses it based on tag and class properties. 
+    Returns list of parsed bs4 object contents.
+    """
     raw_base = soup.find_all("h3", {"class": "p-name"})
     raw = soup.find_all(tag, {"class": class_})
     if len(raw) != len(raw_base):
@@ -147,10 +161,21 @@ def postprocess_soup(soup, tag, class_):
     return raw_list
         
 def get_attributes(soup, **search_dict):
-    attributes_dict = {key: get_content_list(soup, feature_html_details[key][0], feature_html_details[key][1]) for key in feature_html_details}
+
+    """
+    Collects parsed hotels.com webpage data into a dictionary
+    """
+    attributes_dict = {key: postprocess_soup(soup, feature_html_details[key][0], feature_html_details[key][1]) for key in feature_html_details}
     return attributes_dict
 
 def get_dfs(search_dict, attributes_dict):
+    """
+    Takes a `search_dict` containing search parameters and a `attributes_dict` dictionary containing 
+    parsed hotels.com data and creates a Pandas DataFrame from each.
+    
+    The database consists of two tables: `search` and `hotels`. The two dataframes created are upserted 
+    into each respectively.
+    """
 
     ### Processing `search_dict`
     # Expand `destination` field 
@@ -158,8 +183,7 @@ def get_dfs(search_dict, attributes_dict):
     search_dict.update(tmp_dict)
     del search_dict["destination"]
 
-    # Add search timestamp if not already there
-    # if not search_dict["search_datetime"]:
+    # Add search timestamp
     search_dict["search_datetime"] = datetime.now()
     
     # Create search dataframe
@@ -191,6 +215,9 @@ def get_dfs(search_dict, attributes_dict):
     return df_search, df_attributes
 
 def ensure_search_format(search_dict):
+    """
+    Checks search dictionary formatting and required datatypes.
+    """
 
     logger.info(f"Search parameters: {search_dict}\n")
 
@@ -207,19 +234,12 @@ def ensure_search_format(search_dict):
     return search_dict
 
 def run(search):
-    """[summary]
-
-    Args:
-        search ([type]): [description]
-
-    Returns:
-        [type]: [description]
+    """
+    Top-level function for running the parser. 
     """
 
     logger.info("\n\n")
     logger.info("Scraper initiated")
-    # logger.info(f"Search parameters: {search}")
-
 
     search_dict = ensure_search_format(search)
     url = generate_url(**search_dict)

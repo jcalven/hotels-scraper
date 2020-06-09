@@ -9,7 +9,7 @@ def load_schema(file_path):
     return schema
 
 def read_search_config(search_file):
-        config = ConfigParser()
-        config.read(search_file)
-        config.sections()
-        return [dict(config.items(s)) for s in config.sections()]
+    config = ConfigParser()
+    config.read(search_file)
+    config.sections()
+    return [dict(config.items(s)) for s in config.sections()]

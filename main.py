@@ -11,12 +11,23 @@ logging.basicConfig(filename='logs/run.log', format='%(asctime)s - %(message)s',
 logger = logging.getLogger('hotels-scraper.run')
 
 def run_scraper(search, connection):
+    """
+    Helper function for running the scraper and sql upserts
+    """
     df_search, df_attributes = hs.run(search)
     # Upsert search and search results to DB
     sql.to_sql(df_search, "search", connection)
     sql.to_sql(df_attributes, "hotels", connection)
 
 def run(search_path, db_path, schema_path):
+    """
+    Top-level function for running the hotscrape program. 
+
+    Args:
+        search_path (str): Path to search config file
+        db_path (str): Path to database file
+        schema_path (str): Path to database schema file
+    """
 
     logger.info("=======================================================")
     logger.info("                       START RUN                       ")

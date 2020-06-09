@@ -8,6 +8,10 @@ logger = logging.getLogger("hotels-scraper.sql.sql")
 
 class TableMaker(object):
 
+    """
+    Class for creating an SQLite database with a given schema.
+    """
+
     def __init__(self, metadata=None):
         if metadata:
             self.metadata = metadata
@@ -34,11 +38,17 @@ class TableMaker(object):
         return table
     
 def create_connection(filename):
+    """
+    Creates a connection to the database
+    """
     engine = sqlal.create_engine(f'sqlite:///{filename}.db')
     connection = engine.connect()
     return connection
         
 def create_database(filename, schemas, conn=None):
+    """
+    Helper function for creating the database
+    """
     tablemaker = TableMaker()
     if not conn:
         conn = create_connection(filename)
@@ -49,6 +59,11 @@ def create_database(filename, schemas, conn=None):
     return conn
 
 def to_sql(df, table_name, conn):
+
+    """
+    Upserts new data to the database.
+    """
+
     ids = tuple(df.index.to_list())
     n_rows = len(ids)
     if n_rows == 1:

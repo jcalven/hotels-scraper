@@ -2,7 +2,9 @@ import pandas as pd
 import re
 
 def parse_price(row, sale=False):
-    """Extract price data from `price`column"""
+    """
+    Extract price data from `price`column
+    """
 
     row = row[1]["price"]
     # Extract dollar amounts from string
@@ -21,13 +23,17 @@ def parse_price(row, sale=False):
             return int(row[0].lstrip("$"))
 
 def parse_star_rating(row):
-    """Extract hotel star rating data from `star_rating` column"""
+    """
+    Extract hotel star rating data from `star_rating` column
+    """
 
     row = row[1]["star_rating"]
     return float(row.strip("-star"))
 
 def parse_num_reviews(row):
-    """Extract number of reviews data from `num_reviews` column"""
+    """
+    Extract number of reviews data from `num_reviews` column
+    """
 
     row = row[1]["num_reviews"]
     row = re.findall(r"\d+", row)
@@ -37,7 +43,9 @@ def parse_num_reviews(row):
         return None
 
 def parse_rating(row, sentiment=False):
-    """Extract hotel rating data from `rating` column"""
+    """
+    Extract hotel rating data from `rating` column
+    """
 
     row = row[1]["rating"]
     if sentiment:
@@ -54,7 +62,9 @@ def parse_rating(row, sentiment=False):
             return None
 
 def parse_landmarks(row):
-    """Extract landmarks data from `landmarks` column"""
+    """
+    Extract landmarks data from `landmarks` column
+    """
 
     row = row[1]["landmarks"]
     # Extract distance to city center
@@ -76,10 +86,11 @@ def drop_fully_booked(df):
     
 def parse(df):
     """
-    Parses and formats a dataframe containing hotels.com hotel search result attributes. 
+    Top-level function for parsing and formatting a Pandas DataFrame containing hotels.com 
+    hotel search result data. 
 
     Args:
-        df (pd.DataFrame): Pandas hotel attributes dataframe to be parsed
+        df (pd.DataFrame): Pandas hotel attributes DataFrame to be parsed
 
     Returns:
         pd.DataFrame: Parsed and formatted dataframe
@@ -97,6 +108,7 @@ def parse(df):
     city_center_distance = []
 
     # Row-level processing
+    # Add parsing functions as needed
     for row in df.iterrows():
         price.append(parse_price(row))
         price_sale.append(parse_price(row, sale=True))
@@ -106,6 +118,7 @@ def parse(df):
         rating_sentiment.append(parse_rating(row, sentiment=True))
         city_center_distance.append(parse_landmarks(row))
     
+    # Update dataframe
     df["price"] = price
     df["price_sale"] = price_sale
     df["star_rating"] = star_rating
@@ -114,6 +127,7 @@ def parse(df):
     df["rating_sentiment"] = rating_sentiment
     df["distance_centre"] = city_center_distance
 
+    # Drop fully booked hotels (not of interest)
     df = drop_fully_booked(df)
     
     return df
