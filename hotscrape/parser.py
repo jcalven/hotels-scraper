@@ -14,7 +14,7 @@ def parse_price(row, sale=False):
             return None
         else:
             return int(row[0].lstrip("$"))
-    elif len(row) == 2:
+    elif len(row) >= 2:
         if sale:
             return int(row[1].lstrip("$"))
         else:

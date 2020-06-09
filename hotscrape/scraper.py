@@ -11,17 +11,17 @@ from . parser import parse
 
 logger = logging.getLogger("hotels-scraper.scraper.scraper")
 
-feature_html_details = {'name': ('h3', 'p-name'),
-                        'address': ('span', 'address'),
-                        # 'maplink': ('a', 'map-link xs-welcome-rewards'),
-                        'landmarks': ('ul', 'property-landmarks'),
-                        'amenities': ('ul', 'hmvt8258-amenities'),
-                        'details': ('div', 'additional-details resp-module'),
-                        'review_box': ('div', 'details resp-module'),
-                        'rating': ('strong', re.compile('guest-reviews-badge.*')),
-                        'num_reviews': ('span','small-view'),
-                        'price': ('aside', re.compile('pricing resp-module.*')),
-                        'star_rating': ('span', 'star-rating-text')}
+feature_html_details = {"name": ("h3", "p-name"),
+                        "address": ("span", "address"),
+                        # "maplink": ("a", "map-link xs-welcome-rewards"),
+                        "landmarks": ("ul", "property-landmarks"),
+                        "amenities": ("ul", "hmvt8258-amenities"),
+                        "details": ("div", "additional-details resp-module"),
+                        "review_box": ("div", "details resp-module"),
+                        "rating": ("strong", re.compile("guest-reviews-badge.*")),
+                        "num_reviews": ("span","small-view"),
+                        "price": ("aside", re.compile("pricing resp-module.*")),
+                        "star_rating": ("span", "star-rating-text")}
 
 def get_hotels_page(url, max_scroll=20):    
     
@@ -38,7 +38,7 @@ def get_hotels_page(url, max_scroll=20):
     logger.info("Opening URL\n")
 
     options = Options()
-    options.add_argument('--private')
+    options.add_argument("--private")
     options.add_argument("--headless")
     driver = Firefox(executable_path="geckodriver", options=options)
     driver.set_window_size(1920,1080)
@@ -69,8 +69,8 @@ def get_hotels_page(url, max_scroll=20):
             break
             
     # Grabs the html of the fully scrolled-down page and parse it with BeautifulSoup  
-    # innerHTML = driver.execute_script('return document.body.innerHTML')
-    parsed_html = BeautifulSoup(driver.page_source, 'lxml')
+    # innerHTML = driver.execute_script("return document.body.innerHTML")
+    parsed_html = BeautifulSoup(driver.page_source, "lxml")
     driver.close()
     return parsed_html
 
@@ -118,10 +118,34 @@ def generate_url(destination, checkin_datetime, checkout_datetime=None, price_mi
     return url
 
 def get_content_list(soup, tag, class_):
-    raw = soup.find_all(tag, {'class': class_})
-    raw_list = [content.text for content in raw]
-    return raw_list
+    # raw = soup.find_all(tag, {"class": class_})
+    # raw_list = [content.text for content in raw]
+    return postprocess_soup(soup, tag, class_)
 
+def postprocess_soup(soup, tag, class_):
+    raw_base = soup.find_all("h3", {"class": "p-name"})
+    raw = soup.find_all(tag, {"class": class_})
+    if len(raw) != len(raw_base):
+        # Ugly hack to fill missing amenities with NaNs
+        # Ensures that each field (list) are same length even if hotel doesn't have any amenities listed
+        # NOTE: Might need to do for other fields as well
+        if class_ == "hmvt8258-amenities":
+            raw_tmp = soup.find_all("div", {"class": "additional-details resp-module"})
+            raw_list = []
+            for content in raw_tmp:
+                flag = False
+                for subcont in content:
+                    if class_ in subcont:
+                        flag = True
+                        break
+                if flag:
+                    raw_list.append(subcont)
+                else:
+                    raw_list.append(None)
+    else:
+        raw_list = [content.text for content in raw]
+    return raw_list
+        
 def get_attributes(soup, **search_dict):
     attributes_dict = {key: get_content_list(soup, feature_html_details[key][0], feature_html_details[key][1]) for key in feature_html_details}
     return attributes_dict
