@@ -1,13 +1,12 @@
 import logging
 import pandas as pd
 from datetime import datetime, timedelta
+import argparse
 import hotscrape.scraper as hs
 from hotscrape.utils import load_schema
 import hotscrape.sql as sql
-# from . import scraper as hs
-# from . utils import load_schema
-# from . import sql
-# logging.basicConfig(filename='logs/run.log', filemode='w', format='%(asctime)s - %(message)s', datefmt='%d-%b-%y %H:%M:%S')
+from hotscrape.search_parser import Search, create_search_list
+
 logging.basicConfig(filename='logs/run.log', format='%(asctime)s - %(message)s', datefmt='%d-%b-%y %H:%M:%S', level=logging.INFO)
 logger = logging.getLogger('hotels-scraper.run')
 
@@ -16,52 +15,35 @@ def run_scraper(search, connection):
     # Upsert search and search results to DB
     sql.to_sql(df_search, "search", connection)
     sql.to_sql(df_attributes, "hotels", connection)
-    # df_search.to_sql("search", connection, if_exists="append", index=True)
-    # df_attributes.to_sql("hotels", connection, if_exists="append", index=True)
 
-def run(search, db_path="hotels-scraper/test_sql"):
-    logger.info("Start run\n")
+def run(search_path, db_path, schema_path):
 
-    schema = load_schema()
+    logger.info("=======================================================")
+    logger.info("                       START RUN                       ")
+    logger.info("=======================================================\n")
 
-    connection = sql.create_database("./test_sql", schema)
+    schema = load_schema(schema_path)
 
-    if not isinstance(search, (list)):
-        search = [search]
+    connection = sql.create_database(db_path, schema)
 
-    for s in search:
-        run_scraper(s, connection)
+    search_list = create_search_list(search_path)
+
+    if not isinstance(search_list, (list)):
+        search_list = [search_list]
+
+    logger.info(search_list)
+
+    for s_init in search_list:
+        for s in Search.generate(s_init):
+            run_scraper(s.to_dict(), connection)
     logger.info("Run finished")
 
 if __name__ == "__main__":
-    
-    t_start = datetime.now() + timedelta(days=1)
-    t_end = t_start + timedelta(days=181)
-    list_checkin = pd.date_range(t_start, t_end, freq='D').strftime("%Y-%m-%d").tolist()
 
-    search_dict = {
-        "destination": {"city": "Las Vegas", "state": "Nevada", "country": "United States of America"},
-        "checkin_datetime": None, 
-        "checkout_datetime": None,
-        "price_min": 0,
-        "price_max": 10000,
-        "price_multiplier": 1,
-        "star_rating_min": 1,
-        "star_rating_max": 5,
-        "guest_rating_min": 1,
-        "guest_rating_max": 9,
-        "distance_centre": None,
-        "rooms": 1,
-        "adults": 2,
-        "children": 0,
-        "currency": "USD"
-        }  
-    
-    # Build array of search dicts with different checkin dates
-    search = []
-    for checkin in list_checkin:
-        search_dict.update(checkin_datetime=checkin)
-        search.append(dict(search_dict))
+    parser = argparse.ArgumentParser(description='Process some integers.')
+    parser.add_argument("-i", "--input", default="default_search.ini", help="Config file to use for search (e.g. default.ini)")
+    parser.add_argument("-d", "--database", default="default_sql", help="Path to database (e.g. default_sql.db)")
+    parser.add_argument("-s", "--schema", default="db_schema.yml", help="Database schema file (e.g. db_schema.db)")
+    args = parser.parse_args()
 
-    schema = load_schema()
-    run(search, schema)
+    run(args.input, args.database, args.schema)
