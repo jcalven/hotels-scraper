@@ -18,6 +18,7 @@ def run_scraper(search, connection):
     # Upsert search and search results to DB
     sql.to_sql(df_search, "search", connection)
     sql.to_sql(df_attributes, "hotels", connection)
+    print("\n\n")
 
 def run(search_path, db_path, schema_path):
     """
@@ -45,9 +46,14 @@ def run(search_path, db_path, schema_path):
     logger.info(search_list)
 
     for s_init in search_list:
+        # msg = f"Run: {s_init}"
+        # logger.info(msg)
+        # print(msg)
         for s in Search.generate(s_init):
             run_scraper(s.to_dict(), connection)
-    logger.info("Run finished")
+    msg = "Run finished"
+    logger.info(msg)
+    print(msg)
 
 if __name__ == "__main__":
 

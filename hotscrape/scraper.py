@@ -52,10 +52,15 @@ def get_hotels_page(url, max_scroll=20):
     # Nagivate to url 
     driver.get(url)
     
+    msg = "[~] Start scraping ..."
+    logger.info(msg)
+    print(msg)
+
     # Scroll down until the end of the page
-    logger.info("Start scraping ...")
     scroll_count = 0
+    scroll_count_global = 0
     while True:
+        # print(scroll_count)
         driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
         try:
             if driver.find_element_by_id("listings-loading").value_of_css_property("display") == "block":
@@ -63,15 +68,21 @@ def get_hotels_page(url, max_scroll=20):
             else:
                 time.sleep(0.5)
                 scroll_count += 1
+                scroll_count_global += 1
+                print(f"[~] Scroll count: {scroll_count_global}")
         except:
             continue
  
         if any([cur_elem.is_displayed() for cur_elem in driver.find_elements_by_class_name("info")]):
-            logger.info("Scraping ended")
+            msg = "[~] Scraping ended"
+            logger.info(msg)
+            print(msg)
             break
 
         if scroll_count >= max_scroll:
-            logger.info(f"Reached maximum number of page loads ({scroll_count}/{max_scroll}). Stopping ...")
+            msg = f"[~] Reached maximum number of page loads ({scroll_count}/{max_scroll}). Stopping ..."
+            logger.info(msg)
+            print(msg)
             break
             
     # Grabs the html of the fully scrolled-down page and parse it with BeautifulSoup  
@@ -121,7 +132,9 @@ def generate_url(destination, checkin_datetime, checkout_datetime=None, price_mi
         f"q-room-0-children={children}"
     ])
 
-    logger.info(f"Searching url: {url}\n")
+    msg = f"[~] Searching url:\n\t {url}\n"
+    logger.info(msg)
+    print(msg)
     return url
 
 # def get_content_list(soup, tag, class_):
@@ -218,8 +231,9 @@ def ensure_search_format(search_dict):
     """
     Checks search dictionary formatting and required datatypes.
     """
-
-    logger.info(f"Search parameters: {search_dict}\n")
+    msg = f"[~] Search parameters:\n\t {search_dict}\n"
+    logger.info(msg)
+    print(msg)
 
     # Check destination formatting
     assert search_dict.get("destination") is not None

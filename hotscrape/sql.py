@@ -75,11 +75,17 @@ def to_sql(df, table_name, conn):
     indx = np.array(res.fetchall()).flatten()
     df = df.loc[df.index.difference(indx)]
     if not df.empty:
-        logger.info("Updating records ...")
+        msg = "[~] Updating records ..."
+        logger.info(msg)
+        print(msg)
         try:
             df.to_sql(table_name, conn, if_exists="append", index=True)
-            logger.info(f"{df.shape[0]}/{n_rows} records upserted to table <{table_name}>")
+            msg = f"[~] {df.shape[0]}/{n_rows} records upserted to table <{table_name}>"
+            logger.info(msg)
+            print(msg)
         except Exception as error:
             logger.error(error)
     else:
-        logger.info(f"0/{n_rows} records upserted to <{table_name}>. (No unique records in DataFrame)")
+        msg = f"0/{n_rows} records upserted to <{table_name}>. (No unique records in DataFrame)"
+        logger.info(msg)
+        print(msg)
