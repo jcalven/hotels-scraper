@@ -16,8 +16,10 @@ def run_scraper(search, connection):
     """
     df_search, df_attributes = hs.run(search)
     # Upsert search and search results to DB
-    sql.to_sql(df_search, "search", connection)
-    sql.to_sql(df_attributes, "hotels", connection)
+    if not df_search.empty:
+        sql.to_sql(df_search, "search", connection)
+    if not df_attributes.empty:
+        sql.to_sql(df_attributes, "hotels", connection)
     print("\n\n")
 
 def run(search_path, db_path, schema_path):

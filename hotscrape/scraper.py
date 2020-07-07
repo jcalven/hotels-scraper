@@ -59,32 +59,37 @@ def get_hotels_page(url, max_scroll=20):
     # Scroll down until the end of the page
     scroll_count = 0
     scroll_count_global = 0
-    while True:
-        # print(scroll_count)
-        driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
-        try:
-            if driver.find_element_by_id("listings-loading").value_of_css_property("display") == "block":
-                scroll_count = 0
-            else:
-                time.sleep(0.5)
-                scroll_count += 1
-                scroll_count_global += 1
-                print(f"[~] Scroll count: {scroll_count_global}")
-        except:
-            continue
- 
-        if any([cur_elem.is_displayed() for cur_elem in driver.find_elements_by_class_name("info")]):
-            msg = "[~] Scraping ended"
-            logger.info(msg)
-            print(msg)
-            break
 
-        if scroll_count >= max_scroll:
-            msg = f"[~] Reached maximum number of page loads ({scroll_count}/{max_scroll}). Stopping ..."
-            logger.info(msg)
-            print(msg)
-            break
-            
+    try:
+        while True:
+            # print(scroll_count)
+            driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+            try:
+                if driver.find_element_by_id("listings-loading").value_of_css_property("display") == "block":
+                    scroll_count = 0
+                else:
+                    time.sleep(0.5)
+                    scroll_count += 1
+                    scroll_count_global += 1
+                    print(f"[~] Scroll count: {scroll_count_global}")
+            except:
+                continue
+    
+            if any([cur_elem.is_displayed() for cur_elem in driver.find_elements_by_class_name("info")]):
+                msg = "[~] Scraping ended"
+                logger.info(msg)
+                print(msg)
+                break
+
+            if scroll_count >= max_scroll:
+                msg = f"[~] Reached maximum number of page loads ({scroll_count}/{max_scroll}). Stopping ..."
+                logger.info(msg)
+                print(msg)
+                break
+    except exception as e:
+        logger.error(e)
+        return None
+
     # Grabs the html of the fully scrolled-down page and parse it with BeautifulSoup  
     # innerHTML = driver.execute_script("return document.body.innerHTML")
     parsed_html = BeautifulSoup(driver.page_source, "lxml")
@@ -259,7 +264,10 @@ def run(search):
     url = generate_url(**search_dict)
     
     soup = get_hotels_page(url)
-    res = get_attributes(soup, **search_dict)
-
-    df_search, df_attributes = get_dfs(search_dict, res)
-    return df_search, df_attributes
+    
+    if soup:
+        res = get_attributes(soup, **search_dict)
+        df_search, df_attributes = get_dfs(search_dict, res)
+        return df_search, df_attributes
+    else:
+        return pd.DataFrame(), pd.DataFrame()
