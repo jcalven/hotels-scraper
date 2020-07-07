@@ -2,7 +2,8 @@ import logging
 import pandas as pd
 from datetime import datetime, timedelta
 import argparse
-import hotscrape.scraper as hs
+#import hotscrape.scraper as hs
+from hotscrape.scraper import HotelsScraper
 from hotscrape.utils import load_schema
 import hotscrape.sql as sql
 from hotscrape.search_parser import Search, create_search_list
@@ -14,6 +15,8 @@ def run_scraper(search, connection):
     """
     Helper function for running the scraper and sql upserts
     """
+
+    hs = HotelsScraper()
     df_search, df_attributes = hs.run(search)
     # Upsert search and search results to DB
     if not df_search.empty:
