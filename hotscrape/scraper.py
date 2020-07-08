@@ -1,5 +1,6 @@
 import pandas as pd
 from bs4 import BeautifulSoup
+# from requests_futures.sessions import FuturesSession
 import time
 import re
 import logging
@@ -278,3 +279,107 @@ class HotelsScraper(Scraper):
         attributes_dict = {key: postprocess_soup(soup, self.feature_html_details[key][0], self.feature_html_details[key][1]) for key in self.feature_html_details}
         return attributes_dict
 
+# class BookingsScraper(Scraper):
+
+#     feature_html_details = {"name": ("h3", "p-name"),
+#                         "address": ("span", "address"),
+#                         # "maplink": ("a", "map-link xs-welcome-rewards"),
+#                         "landmarks": ("ul", "property-landmarks"),
+#                         "amenities": ("ul", "hmvt8258-amenities"),
+#                         "details": ("div", "additional-details resp-module"),
+#                         "review_box": ("div", "details resp-module"),
+#                         "rating": ("strong", re.compile("guest-reviews-badge.*")),
+#                         "num_reviews": ("span","small-view"),
+#                         "price": ("aside", re.compile("pricing resp-module.*")),
+#                         "star_rating": ("span", "star-rating-text")}
+
+
+#     def generate_url(self, destination, checkin_datetime, checkout_datetime=None, price_min=0, price_max=10000, price_multiplier=1, 
+#                     star_rating_min=1, star_rating_max=5, guest_rating_min=1, guest_rating_max=9, distance_centre=None, 
+#                     rooms=1, adults=2, children=0, currency="USD", dest_type="city"):
+        
+#         """
+#         Takes hotel search parameters and returns a hotels.com URL string.
+#         """
+
+#         # Concatenate star rating list into string of correct format
+#         # star_rating = "".join(map(lambda x: str(x)+",", range(star_rating_max,star_rating_min-1,-1))).rstrip(",")
+
+#         # Format destination dict
+#         destination = {key: val.replace(" ", "%20") for key, val in destination.items()}
+#         dest_field_1 = destination.get("city")
+#         # dest_field_2 = destination.get("state")
+#         # dest_field_3 = destination.get("country")
+
+#         url = "".join([
+#             "https://www.booking.com/searchresults.html?tmpl=searchresults&",
+#             f"checkin_month={checkin_date.month}&",
+#             f"checkin_monthday={checkin_date.day}&",
+#             f"checkin_year={checkin_date.year}&",
+#             f"checkout_month={checkout_date.month}&",
+#             f"checkout_monthday={checkout_date.day}&",
+#             f"checkout_year={checkout_date.year}&",
+#             "class_interval=1&",
+#             f"dest_type={dest_type}&", # dest_type=city  # if distance_centre else "",
+#             "dtdisc=0",
+#             f"group_adults={adults}&",
+#             f"group_children={children}&",
+#             f"no_rooms={rooms}&",
+#             "postcard=0&",
+#             f"raw_dest_type={dest_type}",
+#             "sb_price_type=total",
+#             "shw_aparth=0",
+#             f"ss={dest_field_1}",
+#             f"nflt=class%3D1%3Bclass%3D2%3Bclass%3D3%3Bclass%3D4%3Bclass%3D5%3Bht_id%3D204"
+#         ])
+
+#         msg = f"[~] Searching url:\n\t {url}\n"
+#         logger.info(msg)
+#         print(msg)
+#         return url
+
+#     def get_hotels_page(self, url):  
+
+#         """
+#         Takes an url from Hotels.com and infinitely scrolls down to end of page until no more content can be loaded.
+
+#         Args:
+#             url (str): hotels.com URL
+#             max_scroll (int, optional): Max number of webpage scrolls. Defaults to 20.
+
+#         Returns:
+#             bs4: Parsed website
+#         """
+
+#         session = FuturesSession()
+#         response = session.get(url)
+#         page = response.result()
+#         main_page = BeautifulSoup(page.text, "lxml")
+    
+#         urls = [href["href"] for href in main_page.select(".bui-pagination__link.sr_pagination_link")]
+#         responses = session.get(urls)
+
+#         parsed_html_list = [BeautifulSoup(response.result().text, "lxml") for response in responses]
+        
+#         return parsed_html_list
+
+#     def get_attributes(self, soup, **search_dict):
+
+#         """
+#         Collects parsed hotels.com webpage data into a dictionary
+#         """
+#         attributes_dict = {key: postprocess_soup(soup, self.feature_html_details[key][0], self.feature_html_details[key][1]) for key in self.feature_html_details}
+#         return attributes_dict
+
+
+#     feature_html_details = {"name": ("class", "sr-hotel__name"),
+#                         # "address": ("span", "address"),
+#                         # "maplink": ("a", "map-link xs-welcome-rewards"),
+#                         # "landmarks": ("ul", "property-landmarks"),
+#                         # "amenities": ("ul", "hmvt8258-amenities"),
+#                         # "details": ("div", "additional-details resp-module"),
+#                         "review_box": ("div", "details resp-module"),
+#                         "rating": ("strong", re.compile("guest-reviews-badge.*")),
+#                         "num_reviews": ("span","small-view"),
+#                         "price": ("aside", re.compile("pricing resp-module.*")),
+#                         "star_rating": ("span", "star-rating-text")}
