@@ -277,7 +277,7 @@ class HotelsScraper(Scraper):
         """
         Collects parsed hotels.com webpage data into a dictionary
         """
-        attributes_dict = {key: postprocess_soup(soup, self.feature_html_details[key][0], self.feature_html_details[key][1]) for key in self.feature_html_details}
+        attributes_dict = {key: self.postprocess_soup(soup, self.feature_html_details[key][0], self.feature_html_details[key][1]) for key in self.feature_html_details}
         return attributes_dict
 
 # class BookingsScraper(Scraper):
