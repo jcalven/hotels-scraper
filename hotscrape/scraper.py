@@ -179,7 +179,7 @@ class HotelsScraper(Scraper):
                     logger.info(msg)
                     print(msg)
                     break
-        except exception as e:
+        except Exception as e:
             logger.error(e)
             return None
 
