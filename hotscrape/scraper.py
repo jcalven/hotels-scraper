@@ -187,6 +187,7 @@ class HotelsScraper(Scraper):
         # innerHTML = driver.execute_script("return document.body.innerHTML")
         parsed_html = BeautifulSoup(driver.page_source, "lxml")
         driver.close()
+        driver.quit()
         return parsed_html
 
     def generate_url(self, destination, checkin_datetime, checkout_datetime=None, price_min=0, price_max=10000, price_multiplier=1, 
