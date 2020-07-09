@@ -116,7 +116,7 @@ class HotelsScraper(Scraper):
                         "price": ("aside", re.compile("pricing resp-module.*")),
                         "star_rating": ("span", "star-rating-text")}
 
-    def get_hotels_page(self, url, max_scroll=20):  
+    def get_hotels_page(self, url, max_scroll=100):  
 
         """
         Takes an url from Hotels.com and infinitely scrolls down to end of page until no more content can be loaded.
@@ -166,7 +166,11 @@ class HotelsScraper(Scraper):
                         scroll_count_global += 1
                         print(f"[~] Scroll count: {scroll_count_global}")
                 except:
+                    scroll_count += 1
+                    # print(f"[~] Scroll count (cont): {scroll_count_global}   {scroll_count}")
                     continue
+
+                # print(f"[~] Scroll count (outside): {scroll_count_global}   {scroll_count}")
         
                 if any([cur_elem.is_displayed() for cur_elem in driver.find_elements_by_class_name("info")]):
                     msg = "[~] Scraping ended"
