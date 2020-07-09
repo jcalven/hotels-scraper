@@ -167,7 +167,7 @@ class HotelsScraper(Scraper):
                         print(f"[~] Scroll count: {scroll_count_global}")
                 except:
                     scroll_count += 1
-                    # print(f"[~] Scroll count (cont): {scroll_count_global}   {scroll_count}")
+                    print(f"[~] Scroll count (cont): {scroll_count_global}   {scroll_count}")
                     continue
 
                 # print(f"[~] Scroll count (outside): {scroll_count_global}   {scroll_count}")
