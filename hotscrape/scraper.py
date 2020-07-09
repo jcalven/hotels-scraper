@@ -168,7 +168,14 @@ class HotelsScraper(Scraper):
                 except:
                     scroll_count += 1
                     print(f"[~] Scroll count (cont): {scroll_count_global}   {scroll_count}")
-                    continue
+
+                    if scroll_count >= max_scroll:
+                        msg = f"[~] Reached maximum number of page loads ({scroll_count}/{max_scroll}). Stopping ..."
+                        logger.info(msg)
+                        print(msg)
+                        break
+                    else:
+                        continue
 
                 # print(f"[~] Scroll count (outside): {scroll_count_global}   {scroll_count}")
         
