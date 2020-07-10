@@ -116,7 +116,7 @@ class HotelsScraper(Scraper):
                         "price": ("aside", re.compile("pricing resp-module.*")),
                         "star_rating": ("span", "star-rating-text")}
 
-    def get_hotels_page(self, url, max_scroll=100, max_scroll_global=30):  
+    def get_hotels_page(self, url, max_scroll=100, max_scroll_global=35):  
 
         """
         Takes an url from Hotels.com and infinitely scrolls down to end of page until no more content can be loaded.
